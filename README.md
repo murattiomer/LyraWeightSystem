@@ -44,9 +44,9 @@ Add `ULyraWeightComponent` to the pawn through a Game Feature Action (Add Compon
 
 ### 3. Assign the overweight effect
 
-Set `OverweightEffectClass` on the component. The component applies this effect while `Weight` exceeds `MaxWeight` and removes it when `Weight` drops back under. The default effect simply grants the `Status.Overweight` tag — reacting to that tag (a movement penalty, a UI warning) is left to the game.
+Set `OverweightEffectClass` on the component. The component applies this effect while `Weight` exceeds `MaxWeight` and removes it when `Weight` drops back under. The effect grants the `Status.Overweight` tag and directly modifies the movement speed attribute (`LyraMovementSet.MovementSpeed`).
 
-![Overweight effect grants a tag](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_2.png)
+![Overweight effect grants tag and modifies movement speed](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_2.png)
 
 ## Adding a weight source
 
@@ -170,8 +170,3 @@ When the pawn spawns, the initial weight is calculated from the starting invento
 Picking up an item or weapon triggers the change delegate, recalculating the total weight and updating the UI in real time (e.g., 20/100):
 
 ![In-game HUD displaying updated weight after pickup](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
-
-## Planned
-
-- **Movement penalty via a gameplay effect.** Instead of a gameplay ability adjusting speed, a gameplay effect keyed off `Status.Overweight` would apply a movement multiplier directly. This depends on movement speed being driven through an attribute the effect can modify.
-- **Inventory contribution from real items.** The reference contributor returns a flat value; a real one sums the weight of the items it holds.

@@ -44,9 +44,9 @@ Lyra (modül `Source/LyraGame/WeightSystem` altında yaşar), ayrıca her Lyra p
 
 ### 3. Overweight efektini ata
 
-Component üzerinde `OverweightEffectClass`'ı ayarla. Component bu efekti `Weight`, `MaxWeight`'i aştığı sürece uygular ve `Weight` tekrar altına düştüğünde kaldırır. Varsayılan efekt yalnızca `Status.Overweight` tag'ini ekler — bu tag'e tepki vermek (hareket cezası, UI uyarısı) oyuna bırakılmıştır.
+Component üzerinde `OverweightEffectClass`'ı ayarla. Component bu efekti `Weight`, `MaxWeight`'i aştığı sürece uygular ve `Weight` tekrar altına düştüğünde kaldırır. Efekt `Status.Overweight` tag'ini ekler ve doğrudan hareket hızı attribute'unu (`LyraMovementSet.MovementSpeed`) değiştirir.
 
-![Overweight efekti bir tag ekler](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_2.png)
+![Overweight efekti tag ekler ve hareket hızını değiştirir](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_2.png)
 
 ## Ağırlık kaynağı ekleme
 
@@ -170,8 +170,3 @@ Pawn spawn olduğunda, başlangıç ağırlığı mevcut envantere göre hesapla
 Yerden yeni bir eşya veya silah alındığında değişim delegate'i tetiklenir, toplam ağırlık yeniden hesaplanır ve UI anlık olarak güncellenir (örn. 20/100):
 
 ![Silah alındıktan sonra güncellenen ağırlık göstergesi](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
-
-## Planlanan
-
-- **Gameplay effect üzerinden hareket cezası.** Hızı ayarlayan bir gameplay ability yerine, `Status.Overweight` tag'ine bağlı bir gameplay effect doğrudan bir hareket çarpanı uygular. Bu, hareket hızının efektin değiştirebileceği bir attribute üzerinden yönetilmesine bağlıdır.
-- **Gerçek item'lardan envanter katkısı.** Referans contributor sabit bir değer döndürür; gerçek olanı taşıdığı item'ların ağırlığını toplar.
