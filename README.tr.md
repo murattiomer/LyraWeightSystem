@@ -142,11 +142,15 @@ Ağırlık sunucuda hesaplanır: component toplamı authority'de yazar ve `Weigh
 
 ## Ağırlığı okuma
 
-`ULyraWeightComponent` şunları sunar: `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, ilerleme çubuğu için) ve `IsOverweight()`. Ayrıca UI bağlama için `OnCurrentWeightChanged` ve `OnMaxWeightChanged` delegate'lerini broadcast eder.
+`ULyraWeightComponent` şunları sunar: `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, ilerleme çubuğu için) ve `IsOverweight()`. Ayrıca `OnCurrentWeightChanged` ve `OnMaxWeightChanged` delegate'lerini broadcast eder; böylece UI her kare yoklama yapmak yerine ağırlık değiştiği anda güncellenebilir.
 
-Basit bir HUD widget'ı bunları doğrudan okuyabilir — burada `GetWeightNormalized()` ilerleme çubuğunu besler, `GetCurrentWeight()` ve `GetMaxWeight()` etiketi biçimlendirir, `IsOverweight()` ise çubuğun rengini seçer:
+Bir HUD widget'ı construct anında bu delegate'lere bağlanır ve onlar tetiklendiğinde kendini yeniler. Construct'ta yenilemeyi bir kez de doğrudan çağırır ki widget, bir sonraki değişim gelmeden önce güncel değeri göstersin:
 
-![Blueprint'te ağırlık widget'ı](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
+![Widget ağırlık delegate'lerine bağlanır](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
+
+Yenileme, component'i doğrudan okur — `GetWeightNormalized()` ilerleme çubuğunu besler, `GetCurrentWeight()` ve `GetMaxWeight()` etiketi biçimlendirir, `IsOverweight()` ise çubuğun rengini seçer:
+
+![Widget yenilemesi component'i okur](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_10.png)
 
 ## Planlanan
 

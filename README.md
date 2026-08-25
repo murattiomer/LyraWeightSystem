@@ -142,11 +142,15 @@ Weight is resolved on the server: the component writes the total on the authorit
 
 ## Reading the weight
 
-`ULyraWeightComponent` exposes `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, for a progress bar), and `IsOverweight()`. It also broadcasts `OnCurrentWeightChanged` and `OnMaxWeightChanged` for UI binding.
+`ULyraWeightComponent` exposes `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, for a progress bar), and `IsOverweight()`. It also broadcasts `OnCurrentWeightChanged` and `OnMaxWeightChanged`, so UI can update the moment weight changes instead of polling every frame.
 
-A simple HUD widget can read these directly — here `GetWeightNormalized()` drives a progress bar, `GetCurrentWeight()` and `GetMaxWeight()` format the label, and `IsOverweight()` selects the bar colour:
+A HUD widget binds to those delegates on construct and refreshes itself whenever they fire. On construct it also calls the refresh once, so the widget shows the current value before the next change arrives:
 
-![Weight widget in Blueprint](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
+![Widget binds to the weight delegates](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
+
+The refresh reads the component directly — `GetWeightNormalized()` drives the progress bar, `GetCurrentWeight()` and `GetMaxWeight()` format the label, and `IsOverweight()` selects the bar colour:
+
+![Widget refresh reads the component](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_10.png)
 
 ## Planned
 
