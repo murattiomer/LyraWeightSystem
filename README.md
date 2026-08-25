@@ -80,7 +80,18 @@ Then return the current total and hand back the delegate. In the cpp:
 ```cpp
 float ULyraInventoryManagerComponent::GetWeightContribution() const
 {
-    return 100.f;
+    float TotalWeight = 0.f;
+
+    for (const FLyraInventoryEntry& Entry : InventoryList.Entries)
+    {
+        if (Entry.Instance)
+        {
+            // Test: each item counts as 10 weight per stack.
+            TotalWeight += 10.f * Entry.StackCount;
+        }
+    }
+
+    return TotalWeight;
 }
 
 FOnWeightContributionChanged& ULyraInventoryManagerComponent::GetOnWeightContributionChanged()
@@ -89,13 +100,51 @@ FOnWeightContributionChanged& ULyraInventoryManagerComponent::GetOnWeightContrib
 }
 ```
 
-The `100.f` is a placeholder — replace it with the real total of whatever this component holds.
-
 Finally, broadcast `OnWeightContributionChanged` from every authoritative path that changes those contents, so the weight component knows to recalculate:
 
 ```cpp
-// Server-side, wherever contents change:
-OnWeightContributionChangedDelegate.Broadcast();
+ULyraInventoryItemInstance* ULyraInventoryManagerComponent::AddItemDefinition(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, int32 StackCount)
+{
+    ULyraInventoryItemInstance* Result = nullptr;
+    if (ItemDef != nullptr)
+    {
+        Result = InventoryList.AddEntry(ItemDef, StackCount);
+
+        if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Result)
+        {
+            AddReplicatedSubObject(Result);
+        }
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+    return Result;
+}
+
+void ULyraInventoryManagerComponent::AddItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.AddEntry(ItemInstance);
+    if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && ItemInstance)
+    {
+        AddReplicatedSubObject(ItemInstance);
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
+
+void ULyraInventoryManagerComponent::RemoveItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.RemoveEntry(ItemInstance);
+
+    if (ItemInstance && IsUsingRegisteredSubObjectList())
+    {
+        RemoveReplicatedSubObject(ItemInstance);
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
 ```
 
 Weight is resolved on the server: the component writes the total on the authority, and the `Weight` attribute replicates to clients through GAS. Clients read the replicated value for UI; they do not recompute it.
@@ -106,11 +155,11 @@ Weight is resolved on the server: the component writes the total on the authorit
 
 A HUD widget binds to possession changes to safely manage these delegates. By listening to `OnPossessedPawnChanged`, the widget can find the current weight component, unbind from the previous pawn's component, and bind its custom events to the new pawn's `OnCurrentWeightChanged` delegate. 
 
-![Widget binds to possessed pawn changes](Screenshot_11.jpg)
+![Widget binds to possessed pawn changes](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_11.png)
 
 The UI refresh logic reads the component directly when the delegate fires. `GetWeightNormalized()` drives the progress bar, `GetCurrentWeight()` and `GetMaxWeight()` format the text label, and `IsOverweight()` is used to select the UI color:
 
-![Widget refresh reads the component](Screenshot_12.jpg)
+![Widget binds to possessed pawn changes](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_12.png)
 
 ## Planned
 
