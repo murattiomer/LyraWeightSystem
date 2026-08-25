@@ -161,6 +161,16 @@ The UI refresh logic reads the component directly when the delegate fires. `GetW
 
 ![Widget refresh reads the component](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_12.png)
 
+### Runtime Result
+
+When the pawn spawns, the initial weight is calculated from the starting inventory (e.g., 10/100):
+
+![In-game HUD displaying initial weight](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_3.png)
+
+Picking up an item or weapon triggers the change delegate, recalculating the total weight and updating the UI in real time (e.g., 20/100):
+
+![In-game HUD displaying updated weight after pickup](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
+
 ## Planned
 
 - **Movement penalty via a gameplay effect.** Instead of a gameplay ability adjusting speed, a gameplay effect keyed off `Status.Overweight` would apply a movement multiplier directly. This depends on movement speed being driven through an attribute the effect can modify.

@@ -161,6 +161,16 @@ UI yenileme mantığı delegate tetiklendiğinde component'i doğrudan okur. `Ge
 
 ![Widget yenilemesi component'i okur](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_12.png)
 
+### Çalışma Zamanı Sonucu (Runtime Result)
+
+Pawn spawn olduğunda, başlangıç ağırlığı mevcut envantere göre hesaplanır (örn. 10/100):
+
+![Oyun içi HUD başlangıç ağırlık göstergesi](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_3.png)
+
+Yerden yeni bir eşya veya silah alındığında değişim delegate'i tetiklenir, toplam ağırlık yeniden hesaplanır ve UI anlık olarak güncellenir (örn. 20/100):
+
+![Silah alındıktan sonra güncellenen ağırlık göstergesi](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
+
 ## Planlanan
 
 - **Gameplay effect üzerinden hareket cezası.** Hızı ayarlayan bir gameplay ability yerine, `Status.Overweight` tag'ine bağlı bir gameplay effect doğrudan bir hareket çarpanı uygular. Bu, hareket hızının efektin değiştirebileceği bir attribute üzerinden yönetilmesine bağlıdır.
