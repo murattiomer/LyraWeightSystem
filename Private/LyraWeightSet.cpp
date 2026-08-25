@@ -27,12 +27,7 @@ void ULyraWeightSet::OnRep_Weight(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(ULyraWeightSet, Weight, OldValue);
 
-	// Broadcast on the client when the value replicates in, mirroring Lyra's health set.
-	// Without this, the set's own delegate only fires on the server.
-	const float CurrentWeight = GetWeight();
-	const float EstimatedMagnitude = CurrentWeight - OldValue.GetCurrentValue();
-
-	OnWeightChanged.Broadcast(nullptr, nullptr, nullptr, EstimatedMagnitude, OldValue.GetCurrentValue(), CurrentWeight);
+	OnWeightChanged.Broadcast(nullptr, nullptr, nullptr, GetWeight() - OldValue.GetCurrentValue(), OldValue.GetCurrentValue(), GetWeight());
 }
 
 void ULyraWeightSet::OnRep_MaxWeight(const FGameplayAttributeData& OldValue)
