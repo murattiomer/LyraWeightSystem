@@ -3,6 +3,8 @@
 #include "LyraWeightComponent.h"
 #include "LyraWeightSet.h"
 #include "LyraLogChannels.h"
+#include "Character/LyraPawnExtensionComponent.h"
+#include "AbilitySystem/LyraAbilitySystemComponent.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraWeightComponent)
 
@@ -19,7 +21,7 @@ ULyraWeightComponent::ULyraWeightComponent(const FObjectInitializer& ObjectIniti
 	SetIsReplicatedByDefault(true);
 
 	AbilitySystemComponent = nullptr;
-	WeightSet = nullptr;
+	LyraWeightSet = nullptr;
 }
 
 // -------------------------------------------------------------------
@@ -44,16 +46,16 @@ void ULyraWeightComponent::InitializeWithAbilitySystem(UAbilitySystemComponent* 
 		return;
 	}
 
-	WeightSet = AbilitySystemComponent->GetSet<ULyraWeightSet>();
-	if (!WeightSet)
+	LyraWeightSet = AbilitySystemComponent->GetSet<ULyraWeightSet>();
+	if (!LyraWeightSet)
 	{
-		UE_LOG(LogLyra, Error, TEXT("WeightComponent: Cannot initialize [%s] — UWeightSet not found on ASC."), *GetNameSafe(Owner));
+		UE_LOG(LogLyra, Error, TEXT("WeightComponent: Cannot initialize [%s] — ULyraWeightSet not found on ASC."), *GetNameSafe(Owner));
 		AbilitySystemComponent = nullptr;
 		return;
 	}
 
-	WeightSet->OnWeightChanged.AddUObject(this, &ThisClass::HandleCurrentWeightChanged);
-	WeightSet->OnMaxWeightChanged.AddUObject(this, &ThisClass::HandleMaxWeightChanged);
+	LyraWeightSet->OnWeightChanged.AddUObject(this, &ThisClass::HandleCurrentWeightChanged);
+	LyraWeightSet->OnMaxWeightChanged.AddUObject(this, &ThisClass::HandleMaxWeightChanged);
 
 	// Subscribe to contributors and compute the initial total.
 	BindContributors();
@@ -76,13 +78,13 @@ void ULyraWeightComponent::UninitializeFromAbilitySystem()
 
 	UnbindContributors();
 
-	if (WeightSet)
+	if (LyraWeightSet)
 	{
-		WeightSet->OnWeightChanged.RemoveAll(this);
-		WeightSet->OnMaxWeightChanged.RemoveAll(this);
+		LyraWeightSet->OnWeightChanged.RemoveAll(this);
+		LyraWeightSet->OnMaxWeightChanged.RemoveAll(this);
 	}
 
-	WeightSet = nullptr;
+	LyraWeightSet = nullptr;
 	AbilitySystemComponent = nullptr;
 }
 
@@ -221,20 +223,20 @@ void ULyraWeightComponent::UnbindContributors()
 
 float ULyraWeightComponent::GetCurrentWeight() const
 {
-	return WeightSet ? WeightSet->GetWeight() : 0.f;
+	return LyraWeightSet ? LyraWeightSet->GetWeight() : 0.f;
 }
 
 float ULyraWeightComponent::GetMaxWeight() const
 {
-	return WeightSet ? WeightSet->GetMaxWeight() : 0.f;
+	return LyraWeightSet ? LyraWeightSet->GetMaxWeight() : 0.f;
 }
 
 float ULyraWeightComponent::GetWeightNormalized() const
 {
-	if (WeightSet)
+	if (LyraWeightSet)
 	{
-		const float Max = WeightSet->GetMaxWeight();
-		return (Max > 0.f) ? (WeightSet->GetWeight() / Max) : 0.f;
+		const float Max = LyraWeightSet->GetMaxWeight();
+		return (Max > 0.f) ? (LyraWeightSet->GetWeight() / Max) : 0.f;
 	}
 	return 0.f;
 }
