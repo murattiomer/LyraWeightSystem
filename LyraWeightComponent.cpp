@@ -5,6 +5,8 @@
 #include "LyraLogChannels.h"
 #include "Character/LyraPawnExtensionComponent.h"
 #include "AbilitySystem/LyraAbilitySystemComponent.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/Controller.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(LyraWeightComponent)
 
@@ -32,6 +34,9 @@ void ULyraWeightComponent::InitializeWithAbilitySystem(UAbilitySystemComponent* 
 {
 	AActor* Owner = GetOwner();
 	check(Owner);
+	
+	UE_LOG(LogLyra, Warning, TEXT("WeightComp Init on %s, HasAuthority=%d, WeightSet=%s"),
+	*GetNameSafe(GetOwner()), GetOwner()->HasAuthority(), *GetNameSafe(LyraWeightSet));
 
 	if (AbilitySystemComponent)
 	{
@@ -97,12 +102,16 @@ void ULyraWeightComponent::OnUnregister()
 void ULyraWeightComponent::BeginPlay()
 {
 	Super::BeginPlay();
- 
+
+	// Bind to the pawn extension component's ASC signals. Because this component is added by a
+	// game feature, the base character never references it; instead we hook the same ASC
+	// init/uninit signals the character's built-in components use. _RegisterAndCall fires
+	// immediately if the ASC is already initialized, so late-added components don't miss it.
 	if (ULyraPawnExtensionComponent* PawnExtComp = ULyraPawnExtensionComponent::FindPawnExtensionComponent(GetOwner()))
 	{
 		PawnExtComp->OnAbilitySystemInitialized_RegisterAndCall(
 			FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::HandleAbilitySystemInitialized));
- 
+
 		PawnExtComp->OnAbilitySystemUninitialized_Register(
 			FSimpleMulticastDelegate::FDelegate::CreateUObject(this, &ThisClass::HandleAbilitySystemUninitialized));
 	}
@@ -122,7 +131,7 @@ void ULyraWeightComponent::HandleAbilitySystemInitialized()
 		}
 	}
 }
- 
+
 void ULyraWeightComponent::HandleAbilitySystemUninitialized()
 {
 	UninitializeFromAbilitySystem();
@@ -142,15 +151,33 @@ void ULyraWeightComponent::GatherContributors(TArray<TScriptInterface<ILyraWeigh
 		return;
 	}
 
-	TArray<UActorComponent*> Components;
-	Owner->GetComponents(Components);
-
-	for (UActorComponent* Component : Components)
+	// Collect contributors from a given actor into the output array.
+	auto CollectFrom = [&OutContributors](const AActor* Source)
 	{
-		if (Component && Component->Implements<ULyraWeightContributor>())
+		if (!Source)
 		{
-			OutContributors.Add(TScriptInterface<ILyraWeightContributor>(Component));
+			return;
 		}
+
+		TArray<UActorComponent*> Components;
+		Source->GetComponents(Components);
+
+		for (UActorComponent* Component : Components)
+		{
+			if (Component && Component->Implements<ULyraWeightContributor>())
+			{
+				OutContributors.Add(TScriptInterface<ILyraWeightContributor>(Component));
+			}
+		}
+	};
+
+	// The owner pawn (e.g. equipment lives here).
+	CollectFrom(Owner);
+
+	// And its controller (e.g. inventory lives here in Lyra).
+	if (const APawn* OwnerPawn = Cast<APawn>(Owner))
+	{
+		CollectFrom(OwnerPawn->GetController());
 	}
 }
 
@@ -172,6 +199,8 @@ void ULyraWeightComponent::RecalculateWeight()
 			Total += Contributor->GetWeightContribution();
 		}
 	}
+
+	UE_LOG(LogLyra, Warning, TEXT("RecalculateWeight: found %d contributors, total %f"), Contributors.Num(), Total);
 
 	AbilitySystemComponent->SetNumericAttributeBase(ULyraWeightSet::GetWeightAttribute(), Total);
 }

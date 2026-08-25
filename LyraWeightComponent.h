@@ -63,6 +63,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Weight")
 	UE_API bool IsOverweight() const;
 
+	/** Recalculates the current weight by gathering all contributors and summing their contributions. */
+	UFUNCTION(BlueprintCallable, Category = "Weight")
+	UE_API void RecalculateWeight();
+
 	/** Delegate fired when CurrentWeight changes. */
 	UPROPERTY(BlueprintAssignable)
 	FWeight_AttributeChanged OnCurrentWeightChanged;
@@ -75,30 +79,23 @@ protected:
 
 	/** Called when the component is unregistered from the world. Cleans up any subscriptions to the ability system component. */
 	UE_API virtual void OnUnregister() override;
-	
-	/** */
+
 	UE_API virtual void BeginPlay() override;
- 
-	/** */
+
+	/** Bound to the pawn extension component's ASC init/uninit signals so this game-feature component initializes itself. */
 	UE_API void HandleAbilitySystemInitialized();
-	
-	/** */
 	UE_API void HandleAbilitySystemUninitialized();
 
 	/** Evaluates whether the current weight exceeds the maximum weight and applies or removes the overweight gameplay effect as necessary. */
 	UE_API void EvaluateOverweightState();
 
-	/** Recalculates the current weight by gathering all contributors and summing their contributions. */
-	UFUNCTION(BlueprintCallable, Category = "Weight")
-	UE_API void RecalculateWeight();
-
-	/** Finds all contributors on the owner actor and returns them in OutContributors. */
+	/** Finds all contributors on the owner pawn and its controller, and returns them in OutContributors. */
 	UE_API void GatherContributors(TArray<TScriptInterface<ILyraWeightContributor>>& OutContributors) const;
 
-	/**  Binds to all contributors on the owner actor, so we can recalculate weight when they change. */
+	/**  Binds to all contributors, so we can recalculate weight when they change. */
 	UE_API void BindContributors();
 
-	/**  Unbinds from all contributors on the owner actor. */
+	/**  Unbinds from all contributors. */
 	UE_API void UnbindContributors();
 
 	/** Called when the current weight changes. Broadcasts OnCurrentWeightChanged and evaluates overweight state. */
