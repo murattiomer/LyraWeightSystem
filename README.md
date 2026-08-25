@@ -16,7 +16,7 @@ The core knows nothing about inventory, items, or equipment. Anything that adds 
 
 ## How it fits together
 
-The weight component discovers every `ILyraWeightContributor` on its owner, subscribes to each one's change delegate, and sums their contributions into the `Weight` attribute. It never references a concrete contributor type, so adding a new source of weight requires no change to the component. Weight is resolved on the server and the attribute replicates to clients for UI.
+The weight component discovers every `ILyraWeightContributor` on its owner pawn **and on that pawn's controller** — in Lyra, inventory typically lives on the controller while equipment lives on the pawn. It subscribes to each one's change delegate and sums their contributions into the `Weight` attribute. It never references a concrete contributor type, so adding a new source of weight requires no change to the component. Weight is resolved on the server and the attribute replicates to clients for UI.
 
 ![Runtime data flow](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_8.png)
 
@@ -50,7 +50,7 @@ Set `OverweightEffectClass` on the component. The component applies this effect 
 
 ## Adding a weight source
 
-Implement `ILyraWeightContributor` on any component whose contents should count toward carry weight — an inventory, an equipment manager, a backpack. The weight component sums `GetWeightContribution()` across every contributor on the pawn and recalculates whenever any contributor broadcasts its change delegate.
+Implement `ILyraWeightContributor` on any component whose contents should count toward carry weight — an inventory, an equipment manager, a backpack. The weight component sums `GetWeightContribution()` across every contributor on the pawn and its controller, and recalculates whenever any contributor broadcasts its change delegate.
 
 First, implement the interface and hold the delegate. In the header:
 

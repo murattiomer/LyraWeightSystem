@@ -16,7 +16,7 @@ Lyra için GAS ve Modular Gameplay üzerine kurulu, modüler bir taşıma ağır
 
 ## Nasıl bir araya geliyor
 
-Weight component, owner'ı üzerindeki her `ILyraWeightContributor`'ı bulur, her birinin değişim delegate'ine abone olur ve katkılarını `Weight` attribute'unda toplar. Somut bir contributor tipine hiçbir zaman referans vermez, bu yüzden yeni bir ağırlık kaynağı eklemek component'te hiçbir değişiklik gerektirmez. Ağırlık sunucuda hesaplanır ve attribute UI için istemcilere replike olur.
+Weight component, hem owner pawn'ı **hem de o pawn'ın controller'ı** üzerindeki her `ILyraWeightContributor`'ı bulur — Lyra'da envanter genelde controller'da, ekipman ise pawn'da yaşar. Her birinin değişim delegate'ine abone olur ve katkılarını `Weight` attribute'unda toplar. Somut bir contributor tipine hiçbir zaman referans vermez, bu yüzden yeni bir ağırlık kaynağı eklemek component'te hiçbir değişiklik gerektirmez. Ağırlık sunucuda hesaplanır ve attribute UI için istemcilere replike olur.
 
 ![Çalışma zamanı veri akışı](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_8.png)
 
@@ -50,7 +50,7 @@ Component üzerinde `OverweightEffectClass`'ı ayarla. Component bu efekti `Weig
 
 ## Ağırlık kaynağı ekleme
 
-`ILyraWeightContributor`'ı, içeriği taşıma ağırlığına sayılması gereken herhangi bir component'e implement et — bir envanter, bir ekipman yöneticisi, bir sırt çantası. Weight component, pawn üzerindeki her contributor'ın `GetWeightContribution()` değerini toplar ve herhangi bir contributor değişim delegate'ini broadcast ettiğinde yeniden hesaplar.
+`ILyraWeightContributor`'ı, içeriği taşıma ağırlığına sayılması gereken herhangi bir component'e implement et — bir envanter, bir ekipman yöneticisi, bir sırt çantası. Weight component, pawn ve controller üzerindeki her contributor'ın `GetWeightContribution()` değerini toplar ve herhangi bir contributor değişim delegate'ini broadcast ettiğinde yeniden hesaplar.
 
 Önce arayüzü implement et ve delegate'i tut. Header'da:
 
