@@ -1,0 +1,10 @@
+# UE build artifacts (shouldn't be here anyway, but just in case)
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+.vs/
+*.VC.db
+*.opensdf
+*.sdf
+*.suo
