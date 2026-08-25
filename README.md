@@ -159,7 +159,7 @@ A HUD widget binds to possession changes to safely manage these delegates. By li
 
 The UI refresh logic reads the component directly when the delegate fires. `GetWeightNormalized()` drives the progress bar, `GetCurrentWeight()` and `GetMaxWeight()` format the text label, and `IsOverweight()` is used to select the UI color:
 
-![Widget binds to possessed pawn changes](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_12.png)
+![Widget refresh reads the component](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_12.png)
 
 ## Planned
 
