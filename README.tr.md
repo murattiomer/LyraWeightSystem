@@ -52,21 +52,90 @@ Component üzerinde `OverweightEffectClass`'ı ayarla. Component bu efekti `Weig
 
 `ILyraWeightContributor`'ı, içeriği taşıma ağırlığına sayılması gereken herhangi bir component'e implement et — bir envanter, bir ekipman yöneticisi, bir sırt çantası. Weight component, pawn üzerindeki her contributor'ın `GetWeightContribution()` değerini toplar ve herhangi bir contributor değişim delegate'ini broadcast ettiğinde yeniden hesaplar.
 
-İki şey gereklidir. Önce arayüzü implement et ve delegate'i tut:
-
-![Arayüzü implement etme](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_3.png)
-
-![Delegate'i tutma](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
-
-Ardından güncel toplamı döndür ve delegate'i geri ver:
-
-![Contributor implementasyonu](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_5.png)
-
-Yukarıdaki `100.f` bir yer tutucudur — bu component'in taşıdığı şeyin gerçek toplamıyla değiştir. İçeriği değiştiren authoritative yoldan (item eklendi, item çıkarıldı, yığın boyutu değişti) `OnWeightContributionChanged`'i broadcast et ki weight component yeniden hesaplaması gerektiğini bilsin:
+Önce arayüzü implement et ve delegate'i tut. Header'da:
 
 ```cpp
-// Sunucu tarafında, içerik değiştiği her yerde:
-OnWeightContributionChangedDelegate.Broadcast();
+/**
+ * Manages an inventory
+ */
+UCLASS(MinimalAPI, BlueprintType)
+class ULyraInventoryManagerComponent : public UActorComponent, public ILyraWeightContributor
+{
+    GENERATED_BODY()
+
+public:
+    virtual float GetWeightContribution() const override;
+    virtual FOnWeightContributionChanged& GetOnWeightContributionChanged() override;
+
+private:
+    UPROPERTY(Replicated)
+    FLyraInventoryList InventoryList;
+
+    FOnWeightContributionChanged OnWeightContributionChangedDelegate;
+};
+```
+
+Ardından güncel toplamı döndür ve delegate'i geri ver. cpp'de:
+
+```cpp
+float ULyraInventoryManagerComponent::GetWeightContribution() const
+{
+    return 100.f;
+}
+
+FOnWeightContributionChanged& ULyraInventoryManagerComponent::GetOnWeightContributionChanged()
+{
+    return OnWeightContributionChangedDelegate;
+}
+```
+
+Yukarıdaki `100.f` bir yer tutucudur — bu component'in taşıdığı şeyin gerçek toplamıyla değiştir.
+
+Son olarak, içeriği değiştiren her authoritative yoldan `OnWeightContributionChanged`'i broadcast et ki weight component yeniden hesaplaması gerektiğini bilsin:
+
+```cpp
+ULyraInventoryItemInstance* ULyraInventoryManagerComponent::AddItemDefinition(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, int32 StackCount)
+{
+    ULyraInventoryItemInstance* Result = nullptr;
+    if (ItemDef != nullptr)
+    {
+        Result = InventoryList.AddEntry(ItemDef, StackCount);
+
+        if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Result)
+        {
+            AddReplicatedSubObject(Result);
+        }
+
+        // Sunucu tarafında, içerik değiştiği her yerde:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+    return Result;
+}
+
+void ULyraInventoryManagerComponent::AddItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.AddEntry(ItemInstance);
+    if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && ItemInstance)
+    {
+        AddReplicatedSubObject(ItemInstance);
+
+        // Sunucu tarafında, içerik değiştiği her yerde:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
+
+void ULyraInventoryManagerComponent::RemoveItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.RemoveEntry(ItemInstance);
+
+    if (ItemInstance && IsUsingRegisteredSubObjectList())
+    {
+        RemoveReplicatedSubObject(ItemInstance);
+
+        // Sunucu tarafında, içerik değiştiği her yerde:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
 ```
 
 Ağırlık sunucuda hesaplanır: component toplamı authority'de yazar ve `Weight` attribute'u GAS üzerinden istemcilere replike olur. İstemciler replike edilen değeri UI için okur; yeniden hesaplamazlar.
@@ -74,6 +143,10 @@ Ağırlık sunucuda hesaplanır: component toplamı authority'de yazar ve `Weigh
 ## Ağırlığı okuma
 
 `ULyraWeightComponent` şunları sunar: `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, ilerleme çubuğu için) ve `IsOverweight()`. Ayrıca UI bağlama için `OnCurrentWeightChanged` ve `OnMaxWeightChanged` delegate'lerini broadcast eder.
+
+Basit bir HUD widget'ı bunları doğrudan okuyabilir — burada `GetWeightNormalized()` ilerleme çubuğunu besler, `GetCurrentWeight()` ve `GetMaxWeight()` etiketi biçimlendirir, `IsOverweight()` ise çubuğun rengini seçer:
+
+![Blueprint'te ağırlık widget'ı](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
 
 ## Planlanan
 

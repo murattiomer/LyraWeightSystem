@@ -52,21 +52,90 @@ Set `OverweightEffectClass` on the component. The component applies this effect 
 
 Implement `ILyraWeightContributor` on any component whose contents should count toward carry weight — an inventory, an equipment manager, a backpack. The weight component sums `GetWeightContribution()` across every contributor on the pawn and recalculates whenever any contributor broadcasts its change delegate.
 
-Two things are required. First, implement the interface and hold the delegate:
-
-![Implementing the interface](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_3.png)
-
-![Holding the delegate](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_4.png)
-
-Then return the current total and hand back the delegate:
-
-![Contributor implementation](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_5.png)
-
-The `100.f` above is a placeholder — replace it with the real total of whatever this component holds. Broadcast `OnWeightContributionChanged` from the authoritative path that changes those contents (item added, item removed, stack size changed) so the weight component knows to recalculate:
+First, implement the interface and hold the delegate. In the header:
 
 ```cpp
-// Server-side, wherever contents change:
-OnWeightContributionChangedDelegate.Broadcast();
+/**
+ * Manages an inventory
+ */
+UCLASS(MinimalAPI, BlueprintType)
+class ULyraInventoryManagerComponent : public UActorComponent, public ILyraWeightContributor
+{
+    GENERATED_BODY()
+
+public:
+    virtual float GetWeightContribution() const override;
+    virtual FOnWeightContributionChanged& GetOnWeightContributionChanged() override;
+
+private:
+    UPROPERTY(Replicated)
+    FLyraInventoryList InventoryList;
+
+    FOnWeightContributionChanged OnWeightContributionChangedDelegate;
+};
+```
+
+Then return the current total and hand back the delegate. In the cpp:
+
+```cpp
+float ULyraInventoryManagerComponent::GetWeightContribution() const
+{
+    return 100.f;
+}
+
+FOnWeightContributionChanged& ULyraInventoryManagerComponent::GetOnWeightContributionChanged()
+{
+    return OnWeightContributionChangedDelegate;
+}
+```
+
+The `100.f` is a placeholder — replace it with the real total of whatever this component holds.
+
+Finally, broadcast `OnWeightContributionChanged` from every authoritative path that changes those contents, so the weight component knows to recalculate:
+
+```cpp
+ULyraInventoryItemInstance* ULyraInventoryManagerComponent::AddItemDefinition(TSubclassOf<ULyraInventoryItemDefinition> ItemDef, int32 StackCount)
+{
+    ULyraInventoryItemInstance* Result = nullptr;
+    if (ItemDef != nullptr)
+    {
+        Result = InventoryList.AddEntry(ItemDef, StackCount);
+
+        if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Result)
+        {
+            AddReplicatedSubObject(Result);
+        }
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+    return Result;
+}
+
+void ULyraInventoryManagerComponent::AddItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.AddEntry(ItemInstance);
+    if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && ItemInstance)
+    {
+        AddReplicatedSubObject(ItemInstance);
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
+
+void ULyraInventoryManagerComponent::RemoveItemInstance(ULyraInventoryItemInstance* ItemInstance)
+{
+    InventoryList.RemoveEntry(ItemInstance);
+
+    if (ItemInstance && IsUsingRegisteredSubObjectList())
+    {
+        RemoveReplicatedSubObject(ItemInstance);
+
+        // Server-side, wherever contents change:
+        OnWeightContributionChangedDelegate.Broadcast();
+    }
+}
 ```
 
 Weight is resolved on the server: the component writes the total on the authority, and the `Weight` attribute replicates to clients through GAS. Clients read the replicated value for UI; they do not recompute it.
@@ -74,6 +143,10 @@ Weight is resolved on the server: the component writes the total on the authorit
 ## Reading the weight
 
 `ULyraWeightComponent` exposes `GetCurrentWeight()`, `GetMaxWeight()`, `GetWeightNormalized()` (0–1, for a progress bar), and `IsOverweight()`. It also broadcasts `OnCurrentWeightChanged` and `OnMaxWeightChanged` for UI binding.
+
+A simple HUD widget can read these directly — here `GetWeightNormalized()` drives a progress bar, `GetCurrentWeight()` and `GetMaxWeight()` format the label, and `IsOverweight()` selects the bar colour:
+
+![Weight widget in Blueprint](https://raw.githubusercontent.com/omergfx28/LyraWeightSystem/main/Images/Screenshot_9.png)
 
 ## Planned
 
