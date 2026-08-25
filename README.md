@@ -16,11 +16,11 @@ The core knows nothing about inventory, items, or equipment. Anything that adds 
 
 The weight component discovers every `ILyraWeightContributor` on its owner, subscribes to each one's change delegate, and sums their contributions into the `Weight` attribute. It never references a concrete contributor type, so adding a new source of weight requires no change to the component. Weight is resolved on the server and the attribute replicates to clients for UI.
 
-![Runtime data flow](Images/Screenshot_8.png)
+![Runtime data flow](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_8.png)
 
 The system initializes itself. A Game Feature grants an ability set (which adds the weight set to the ASC) and adds the weight component; when the pawn extension component reports the ASC is ready, the component binds its contributors and computes the first total.
 
-![Initialization sequence](Images\Screenshot_7.png)
+![Initialization sequence](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_7.png)
 
 ## Requirements
 
@@ -32,19 +32,19 @@ Lyra (the module lives under `Source/LyraGame/WeightSystem`), plus the `Gameplay
 
 Add `ULyraWeightSet` to an ability set (`ULyraAbilitySet`) under **Granted Attributes**. The Game Feature that grants this ability set adds the weight set to the pawn's ability system, the same way every other Lyra attribute set is granted.
 
-![Weight set in an ability set](Images\Screenshot_1.png)
+![Weight set in an ability set](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_1.png)
 
 ### 2. Add the weight component
 
 Add `ULyraWeightComponent` to the pawn through a Game Feature Action (Add Components) targeting `ALyraCharacter`. This keeps weight layered on only for the experiences that enable the feature. No manual initialization call is needed.
 
-![Adding the weight component](Images\Screenshot_6.png)
+![Adding the weight component](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_6.png)
 
 ### 3. Assign the overweight effect
 
 Set `OverweightEffectClass` on the component. The component applies this effect while `Weight` exceeds `MaxWeight` and removes it when `Weight` drops back under. The default effect simply grants the `Status.Overweight` tag — reacting to that tag (a movement penalty, a UI warning) is left to the game.
 
-![Overweight effect grants a tag](Images\Screenshot_2.png)
+![Overweight effect grants a tag](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_2.png)
 
 ## Adding a weight source
 
@@ -52,13 +52,13 @@ Implement `ILyraWeightContributor` on any component whose contents should count 
 
 Two things are required. First, implement the interface and hold the delegate:
 
-![Implementing the interface](Images\Screenshot_3.png)
+![Implementing the interface](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_3.png)
 
-![Holding the delegate](Images\Screenshot_4.png)
+![Holding the delegate](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_4.png)
 
 Then return the current total and hand back the delegate:
 
-![Contributor implementation](Images\Screenshot_5.png)
+![Contributor implementation](https://github.com/omergfx28/LyraWeightSystem/blob/cadc840abadac98475d06b1407a4ecb670c7fd07/Images/Screenshot_5.png)
 
 The `100.f` above is a placeholder — replace it with the real total of whatever this component holds. Broadcast `OnWeightContributionChanged` from the authoritative path that changes those contents (item added, item removed, stack size changed) so the weight component knows to recalculate:
 
